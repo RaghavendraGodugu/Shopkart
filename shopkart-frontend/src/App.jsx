@@ -5,18 +5,36 @@ import Register from "./pages/Register";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
+import Wishlist from "./pages/Wishlist";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import CheckoutPayment from "./pages/CheckoutPayment";
+import OrderSuccess from "./pages/OrderSuccess";
+import Orders from "./pages/Orders";
+import OrderDetails from "./pages/OrderDetails";
 
 function App() {
   return (
     <Routes>
 
-      {/* Default */}
+      {/* =========================================
+          DEFAULT
+      ========================================= */}
+
       <Route
         path="/"
-        element={<Navigate to="/login" replace />}
+        element={
+          <Navigate
+            to="/login"
+            replace
+          />
+        }
       />
 
-      {/* Authentication */}
+      {/* =========================================
+          AUTHENTICATION
+      ========================================= */}
+
       <Route
         path="/register"
         element={<Register />}
@@ -27,28 +45,90 @@ function App() {
         element={<Login />}
       />
 
-      {/* Home */}
+      {/* =========================================
+          HOME
+      ========================================= */}
+
       <Route
         path="/home"
         element={<Home />}
       />
 
-      {/* Products */}
+      {/* =========================================
+          PRODUCTS
+      ========================================= */}
+
       <Route
         path="/products"
         element={<Products />}
       />
 
-      {/* Product Details */}
       <Route
         path="/products/:id"
         element={<ProductDetails />}
       />
 
-      {/* 404 */}
+      {/* =========================================
+          WISHLIST
+      ========================================= */}
+
+      <Route
+        path="/wishlist"
+        element={<Wishlist />}
+      />
+
+      {/* =========================================
+          CART
+      ========================================= */}
+
+      <Route
+        path="/cart"
+        element={<Cart />}
+      />
+
+      {/* =========================================
+          CHECKOUT
+      ========================================= */}
+
+      <Route
+        path="/checkout"
+        element={<Checkout />}
+      />
+
+      <Route
+        path="/checkout/payment"
+        element={<CheckoutPayment />}
+      />
+
+      {/* =========================================
+          ORDER SUCCESS
+      ========================================= */}
+
+      <Route
+        path="/order-success/:id"
+        element={<OrderSuccess />}
+      />
+      <Route
+  path="/orders"
+  element={<Orders />}
+/>
+<Route
+  path="/orders/:id"
+  element={<OrderDetails />}
+/>
+
+      {/* =========================================
+          404
+      ========================================= */}
+
       <Route
         path="*"
-        element={<Navigate to="/login" replace />}
+        element={
+          <Navigate
+            to="/login"
+            replace
+          />
+        }
       />
 
     </Routes>

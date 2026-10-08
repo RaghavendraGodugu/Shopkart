@@ -6,28 +6,32 @@ require("dotenv").config();
 
 const customerRoutes = require("./routes/customer.routes");
 const productRoutes = require("./routes/product.routes");
+const wishlistRoutes = require("./routes/wishlist.routes");
+const cartRoutes = require("./routes/cart.routes");
+const orderRoutes = require("./routes/order.routes");
 
 const app = express();
 
 const PORT = process.env.PORT || 5050;
 
-// ===============================
-// Middleware
-// ===============================
+// ======================================================
+// MIDDLEWARE
+// ======================================================
 
 app.use(express.json());
+
 app.use(cookieParser());
 
 app.use(
   cors({
-    origin: "http://localhost:5174",
+    origin: "http://localhost:5175",
     credentials: true,
   })
 );
 
-// ===============================
-// Health Check
-// ===============================
+// ======================================================
+// HEALTH CHECK
+// ======================================================
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -36,16 +40,30 @@ app.get("/", (req, res) => {
   });
 });
 
-// ===============================
-// API Routes
-// ===============================
+// ======================================================
+// API ROUTES
+// ======================================================
 
+// Customer Authentication
 app.use("/customers", customerRoutes);
+
+// Product APIs
 app.use("/products", productRoutes);
 
-// ===============================
-// Handle Unknown Routes
-// ===============================
+// Wishlist APIs
+app.use("/wishlist", wishlistRoutes);
+
+// Cart APIs
+app.use("/cart", cartRoutes);
+
+// Order APIs
+app.use("/orders", orderRoutes);
+
+// ======================================================
+// HANDLE UNKNOWN ROUTES
+// IMPORTANT:
+// This MUST stay after all API routes.
+// ======================================================
 
 app.use((req, res) => {
   res.status(404).json({
@@ -54,9 +72,9 @@ app.use((req, res) => {
   });
 });
 
-// ===============================
-// Global Error Handler
-// ===============================
+// ======================================================
+// GLOBAL ERROR HANDLER
+// ======================================================
 
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
@@ -67,9 +85,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ===============================
-// Connect MongoDB & Start Server
-// ===============================
+// ======================================================
+// CONNECT MONGODB & START SERVER
+// ======================================================
 
 const startServer = async () => {
   try {
@@ -82,6 +100,7 @@ const startServer = async () => {
     });
   } catch (error) {
     console.error("MongoDB connection failed:", error.message);
+
     process.exit(1);
   }
 };
