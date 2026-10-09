@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import Navbar from "../components/Navbar";
 import { useCart } from "../context/CartContext";
 
 function CheckoutPayment() {
@@ -312,9 +313,12 @@ function CheckoutPayment() {
   // PAGE
   // ------------------------------------------------
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
 
-      <div className="mx-auto max-w-5xl">
+      <div className="px-4 py-8 flex-1">
+
+        <div className="mx-auto max-w-5xl">
 
         {/* PAGE HEADER */}
 
@@ -557,6 +561,7 @@ function CheckoutPayment() {
         </div>
       </div>
 
+      </div>
     </div>
   );
 }

@@ -1,419 +1,120 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import api from "../services/api";
 import { useCart } from "../context/CartContext";
 
-export default function ProductCard({ product }) {
-  const navigate = useNavigate();
+const HeartIcon = ({ className, filled }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+  </svg>
+);
 
+export default function ProductCard({ product, isWishlisted, onWishlistUpdate }) {
   const { cartItems, addToCart } = useCart();
+  
+  const inCart = cartItems.find((item) => item.product?._id === product._id);
 
+  // Status computation for UI badging
   const isOutOfStock = product.stock === 0;
+  const isLowStock = product.stock > 0 && product.stock <= 5;
+  const inStock = product.stock > 5;
 
-  // =====================================================
-  // CART STATE
-  // =====================================================
-
-  const [addingToCart, setAddingToCart] = useState(false);
-  const [cartError, setCartError] = useState("");
-
-  // =====================================================
-  // WISHLIST STATE
-  // =====================================================
-
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [wishlistLoading, setWishlistLoading] = useState(false);
-  const [wishlistError, setWishlistError] = useState("");
-
-  // =====================================================
-  // CHECK CART
-  // =====================================================
-
-  const cartItem = cartItems.find(
-    (item) =>
-      String(item.product?._id) === String(product._id)
-  );
-
-  const isInCart = Boolean(cartItem);
-
-  // =====================================================
-  // CHECK WISHLIST
-  // =====================================================
-
-  useEffect(() => {
-    const checkWishlist = async () => {
-      try {
-        const response = await api.get("/wishlist");
-
-        const wishlist = response.data.wishlist || [];
-
-        const exists = wishlist.some(
-          (wishlistProduct) =>
-            String(wishlistProduct._id) ===
-            String(product._id)
-        );
-
-        setIsWishlisted(exists);
-      } catch (error) {
-        console.error(
-          "Wishlist check error:",
-          error.response?.data || error
-        );
-      }
-    };
-
-    if (product?._id) {
-      checkWishlist();
-    }
-  }, [product?._id]);
-
-  // =====================================================
-  // WISHLIST TOGGLE
-  // =====================================================
-
-  const handleWishlistToggle = async (event) => {
-    event.stopPropagation();
-
-    if (wishlistLoading) {
-      return;
-    }
-
+  const handleWishlistToggle = async () => {
     try {
-      setWishlistLoading(true);
-      setWishlistError("");
-
       if (isWishlisted) {
-        // REMOVE FROM WISHLIST
-        const response = await api.delete(
-          `/wishlist/${product._id}`
-        );
-
-        console.log(
-          "Wishlist remove:",
-          response.data
-        );
-
-        if (response.data.success !== false) {
-          setIsWishlisted(false);
-
-          // Tell Navbar / other components
-          window.dispatchEvent(
-            new Event("wishlistUpdated")
-          );
-        }
+        await api.delete(`/wishlist/${product._id}`);
       } else {
-        // ADD TO WISHLIST
-        const response = await api.post(
-          `/wishlist/${product._id}`
-        );
-
-        console.log(
-          "Wishlist add:",
-          response.data
-        );
-
-        if (response.data.success !== false) {
-          setIsWishlisted(true);
-
-          window.dispatchEvent(
-            new Event("wishlistUpdated")
-          );
-        }
+        await api.post(`/wishlist/${product._id}`);
       }
+      
+      onWishlistUpdate();
+      window.dispatchEvent(new Event("wishlistUpdated"));
     } catch (error) {
-      console.error(
-        "Wishlist toggle error:",
-        error.response?.data || error
-      );
-
-      setWishlistError(
-        error.response?.data?.message ||
-          "Unable to update wishlist."
-      );
-
-      setTimeout(() => {
-        setWishlistError("");
-      }, 2500);
-    } finally {
-      setWishlistLoading(false);
+      console.error("Wishlist toggle error:", error);
     }
   };
 
-  // =====================================================
-  // ADD TO CART
-  // =====================================================
-
-  const handleAddToCart = async (event) => {
-    event.stopPropagation();
-
-    if (isOutOfStock || addingToCart) {
-      return;
-    }
-
-    try {
-      setAddingToCart(true);
-      setCartError("");
-
-      const result = await addToCart(product._id);
-
-      if (!result?.success) {
-        setCartError(
-          result?.message ||
-            "Unable to add product to cart."
-        );
-
-        setTimeout(() => {
-          setCartError("");
-        }, 2500);
-      }
-    } catch (error) {
-      console.error(
-        "Add to cart error:",
-        error
-      );
-
-      setCartError(
-        error.response?.data?.message ||
-          "Unable to add product to cart."
-      );
-
-      setTimeout(() => {
-        setCartError("");
-      }, 2500);
-    } finally {
-      setAddingToCart(false);
-    }
+  const badgeConfig = {
+    out: { bg: "bg-red-100/90 text-red-700 border-red-200", label: "Out of Stock" },
+    low: { bg: "bg-amber-100/90 text-amber-700 border-amber-200", label: "Low Stock" },
+    in: { bg: "bg-emerald-100/90 text-emerald-700 border-emerald-200", label: "In Stock" }
   };
 
-  // =====================================================
-  // GO TO CART
-  // =====================================================
-
-  const handleGoToCart = (event) => {
-    event.stopPropagation();
-
-    navigate("/cart");
-  };
-
-  // =====================================================
-  // PRODUCT DETAILS
-  // =====================================================
-
-  const handleViewDetails = () => {
-    navigate(`/products/${product._id}`);
-  };
-
-  // =====================================================
-  // UI
-  // =====================================================
+  const badge = isOutOfStock ? badgeConfig.out : isLowStock ? badgeConfig.low : badgeConfig.in;
 
   return (
-    <div className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md">
-
-      {/* =================================================
-          PRODUCT IMAGE
-      ================================================= */}
-
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
-
-        <img
-          src={product.image}
-          alt={product.name}
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          onError={(e) => {
-            e.currentTarget.src =
-              "https://placehold.co/600x600/f3f4f6/6b7280?text=ShopKart";
-          }}
-        />
-
-        {/* STOCK BADGE */}
-
-        <div className="absolute left-3 top-3">
-          {isOutOfStock ? (
-            <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600">
-              Out of stock
-            </span>
-          ) : (
-            <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 shadow-sm">
-              {product.stock} left
-            </span>
-          )}
+    <div className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:border-slate-300 transition-all duration-300 flex flex-col h-full">
+      <div className="relative aspect-square overflow-hidden bg-slate-50">
+        <Link to={`/products/${product._id}`} className="block h-full w-full">
+          <img
+            src={product.image}
+            alt={product.name}
+            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isOutOfStock ? 'opacity-70 grayscale-[30%]' : ''}`}
+            onError={(e) => {
+              e.currentTarget.src = "https://placehold.co/400x400/f8fafc/94a3b8?text=Image+Not+Found";
+            }}
+          />
+        </Link>
+        
+        {/* Status Badge */}
+        <div className="absolute top-3 left-3">
+          <span className={`px-2.5 py-1 text-[11px] font-bold rounded-full border backdrop-blur-md shadow-sm ${badge.bg} uppercase tracking-wider`}>
+            {badge.label}
+          </span>
         </div>
 
-        {/* =================================================
-            WISHLIST BUTTON
-        ================================================= */}
-
+        {/* Wishlist Button */}
         <button
-          type="button"
           onClick={handleWishlistToggle}
-          disabled={wishlistLoading}
-          title={
-            isWishlisted
-              ? "Remove from Wishlist"
-              : "Add to Wishlist"
-          }
-          aria-label={
-            isWishlisted
-              ? "Remove from Wishlist"
-              : "Add to Wishlist"
-          }
-          className={`absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border bg-white text-xl shadow-sm transition ${
-            isWishlisted
-              ? "border-red-200 bg-red-50 text-red-500"
-              : "border-gray-200 text-gray-500 hover:border-red-200 hover:bg-red-50 hover:text-red-500"
-          }`}
+          className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-md shadow-sm border border-slate-100 text-slate-500 hover:text-pink-500 hover:scale-110 active:scale-95 transition-all z-10"
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
         >
-          {wishlistLoading ? (
-            <span className="text-xs text-gray-400">
-              ...
-            </span>
-          ) : isWishlisted ? (
-            "♥"
-          ) : (
-            "♡"
-          )}
+          <HeartIcon 
+            className={`w-5 h-5 transition-colors ${isWishlisted ? "text-pink-500" : ""}`} 
+            filled={isWishlisted} 
+          />
         </button>
-
       </div>
 
-      {/* =================================================
-          PRODUCT INFORMATION
-      ================================================= */}
-
-      <div className="p-5">
-
-        {/* CATEGORY */}
-
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-blue-600">
-          {product.category}
-        </p>
-
-        {/* NAME */}
-
-        <h3 className="line-clamp-2 min-h-[3.5rem] text-base font-semibold text-gray-900">
-          {product.name}
-        </h3>
-
-        {/* PRICE */}
-
-        <p className="mt-3 text-xl font-bold text-gray-900">
-          ₹
-          {Number(product.price).toLocaleString(
-            "en-IN"
-          )}
-        </p>
-
-        {/* STOCK */}
-
-        <p className="mt-2 text-sm text-gray-500">
-          {isOutOfStock
-            ? "Currently unavailable"
-            : `${product.stock} units available`}
-        </p>
-
-        {/* =================================================
-            ERROR MESSAGES
-        ================================================= */}
-
-        {cartError && (
-          <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
-            {cartError}
-          </div>
-        )}
-
-        {wishlistError && (
-          <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
-            {wishlistError}
-          </div>
-        )}
-
-        {/* =================================================
-            ACTION BUTTONS
-        ================================================= */}
-
-        <div className="mt-5 flex gap-2">
-
-          {/* CART */}
-
-          {isInCart ? (
-            <button
-              type="button"
-              onClick={handleGoToCart}
-              className="flex-1 rounded-lg bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-            >
-              ✓ Go to Cart
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={
-                isOutOfStock || addingToCart
-              }
-              className={`flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
-                isOutOfStock
-                  ? "cursor-not-allowed bg-gray-200 text-gray-400"
-                  : addingToCart
-                  ? "cursor-wait bg-blue-400 text-white"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
-            >
-              {addingToCart
-                ? "Adding..."
-                : isOutOfStock
-                ? "Out of Stock"
-                : "Add to Cart"}
-            </button>
-          )}
-
-          {/* WISHLIST */}
-
-          <button
-            type="button"
-            onClick={handleWishlistToggle}
-            disabled={wishlistLoading}
-            title={
-              isWishlisted
-                ? "Remove from Wishlist"
-                : "Add to Wishlist"
-            }
-            aria-label={
-              isWishlisted
-                ? "Remove from Wishlist"
-                : "Add to Wishlist"
-            }
-            className={`flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-lg border text-xl transition ${
-              isWishlisted
-                ? "border-red-200 bg-red-50 text-red-500 hover:bg-red-100"
-                : "border-gray-200 bg-white text-gray-500 hover:border-red-200 hover:bg-red-50 hover:text-red-500"
-            }`}
-          >
-            {wishlistLoading ? (
-              <span className="text-xs text-gray-400">
-                ...
-              </span>
-            ) : isWishlisted ? (
-              "♥"
-            ) : (
-              "♡"
-            )}
-          </button>
-
+      <div className="p-5 flex flex-col flex-1">
+        <div className="mb-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-blue-600 mb-1">
+            {product.category}
+          </p>
+          <Link to={`/products/${product._id}`} className="block group-hover:text-blue-600 transition-colors">
+            <h3 className="text-base font-semibold text-slate-900 line-clamp-2 leading-snug h-[42px]" title={product.name}>
+              {product.name}
+            </h3>
+          </Link>
         </div>
 
-        {/* =================================================
-            VIEW DETAILS
-        ================================================= */}
+        <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-100">
+          <p className="text-lg font-bold tracking-tight text-slate-900">
+            ₹{Number(product.price).toLocaleString("en-IN")}
+          </p>
+          
+          <div className="text-xs font-medium text-slate-500 text-right">
+            {isLowStock && <span className="text-amber-600 mb-0.5 block hidden sm:block">Only {product.stock} left</span>}
+          </div>
+        </div>
 
-        <button
-          type="button"
-          onClick={handleViewDetails}
-          className="mt-2.5 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
-        >
-          View Details
-        </button>
-
+        <div className="mt-4 flex gap-2">
+          {inCart ? (
+            <Link 
+              to="/cart" 
+              className="btn-secondary text-sm h-10 flex items-center justify-center bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 py-0"
+            >
+              View in Cart
+            </Link>
+          ) : (
+            <button
+              onClick={() => addToCart(product._id, 1)}
+              disabled={isOutOfStock}
+              className={`btn-primary text-sm h-10 flex items-center justify-center py-0 ${isOutOfStock ? 'bg-slate-200 text-slate-400 cursor-not-allowed border outline-none border-slate-200 hover:bg-slate-200' : ''}`}
+            >
+              {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

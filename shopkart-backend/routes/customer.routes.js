@@ -18,7 +18,9 @@ router.post("/login", loginCustomer);
 
 // Protected routes
 router.get("/me", protect, getMe);
-router.post("/logout", protect, logoutCustomer);
+// Logout clears the cookie — keep it unauthenticated so users with an
+// expired/invalid token can still log out cleanly.
+router.post("/logout", logoutCustomer);
 
 // Bonus
 router.patch("/change-password", protect, changePassword);

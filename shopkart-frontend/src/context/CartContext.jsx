@@ -278,9 +278,9 @@ export function CartProvider({ children }) {
   // REFRESH CART
   // ====================================================
 
-  const refreshCart = async () => {
+  const refreshCart = useCallback(async () => {
     await fetchCart();
-  };
+  }, [fetchCart]);
 
   // ====================================================
   // TOTAL ITEM COUNT

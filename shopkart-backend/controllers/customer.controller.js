@@ -158,10 +158,13 @@ const loginCustomer = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     return res.status(200).json({
-      _id: req.user._id,
-      fullName: req.user.fullName,
-      email: req.user.email,
-      phone: req.user.phone,
+      success: true,
+      customer: {
+        _id: req.user._id,
+        fullName: req.user.fullName,
+        email: req.user.email,
+        phone: req.user.phone,
+      },
     });
   } catch (error) {
     console.error("Get profile error:", error);

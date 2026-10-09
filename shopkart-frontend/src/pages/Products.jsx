@@ -1,161 +1,145 @@
 import { useEffect, useState } from "react";
-import ProductCard from "../components/ProductCard";
-import SearchBar from "../components/SearchBar";
 import Navbar from "../components/Navbar";
+import SearchBar from "../components/SearchBar";
+import ProductCard from "../components/ProductCard";
 import api from "../services/api";
+import { useLocation } from "react-router-dom";
 
-export default function Products() {
+function Products() {
+  const location = useLocation();
+
   const [products, setProducts] = useState([]);
+  const [wishlistParams, setWishlistParams] = useState([]);
 
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(
+    location.state?.category || ""
+  );
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
-  const fetchProducts = async () => {
+  // Keep category in sync when navigating from Home category cards
+  // (location.state changes without remounting this component).
+  useEffect(() => {
+    if (location.state?.category !== undefined) {
+      setCategory(location.state.category || "");
+    }
+  }, [location.state?.category]);
+
+  const fetchData = async () => {
     try {
       setLoading(true);
-      setError("");
 
-      const params = {};
-
-      if (search.trim()) {
-        params.search = search.trim();
-      }
-
-      if (category) {
-        params.category = category;
-      }
-
-      const response = await api.get("/products", {
-        params,
+      // Fetch products first (public). Fetch wishlist separately so a
+      // 401 on wishlist (guest user) doesn't wipe out the product list.
+      const productsRes = await api.get("/products", {
+        params: { search, category },
       });
 
-      setProducts(response.data.products || []);
-    } catch (err) {
-      console.error("Products error:", err);
+      if (productsRes.data.success) {
+        setProducts(productsRes.data.products || []);
+      }
 
-      setError(
-        "Something went wrong while loading products."
-      );
+      try {
+        const wishlistRes = await api.get("/wishlist");
+        if (wishlistRes.data.success) {
+          const list = wishlistRes.data.wishlist || [];
+          // Backend returns populated products directly.
+          const wIds = list.map((item) => item._id || item.product?._id).filter(Boolean);
+          setWishlistParams(wIds);
+        }
+      } catch (wishlistError) {
+        // Guests / expired sessions simply see no wishlist hearts.
+        if (wishlistError.response?.status !== 401) {
+          console.error("Wishlist fetch error:", wishlistError);
+        }
+        setWishlistParams([]);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchProducts();
-    }, 300);
-
-    return () => clearTimeout(timer);
+    fetchData();
   }, [search, category]);
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa]">
-
+    <div className="min-h-screen bg-slate-50">
       <Navbar />
 
-      <main className="mx-auto max-w-7xl px-5 py-10 sm:px-6 lg:py-14">
-
-        {/* Header */}
-        <div className="mb-8">
-          <p className="mb-2 text-sm font-medium text-blue-600">
-            ShopKart Store
-          </p>
-
-          <h1 className="text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
-            Discover Products
-          </h1>
-
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500 sm:text-base">
-            Browse our collection and find something you'll love.
-          </p>
-        </div>
-
-        {/* Search */}
-        <SearchBar
-          search={search}
-          setSearch={setSearch}
-          category={category}
-          setCategory={setCategory}
-        />
-
-        {/* Product count */}
-        {!loading && !error && (
-          <div className="mt-6">
-            <p className="text-sm text-gray-500">
-              {products.length}{" "}
-              {products.length === 1 ? "product" : "products"} found
-            </p>
-          </div>
-        )}
-
-        {/* Loading */}
-        {loading && (
-          <div className="flex min-h-[300px] items-center justify-center">
-            <div className="text-center">
-              <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"></div>
-
-              <p className="mt-4 text-sm text-gray-500">
-                Loading products...
+      {/* Header section with search & filter */}
+      <div className="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-5">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Our Collection</h1>
+              <p className="text-sm text-slate-500 mt-1">
+                {products.length} {products.length === 1 ? 'product' : 'products'} available
               </p>
             </div>
+            
+            <div className="w-full md:w-auto">
+              <SearchBar
+                search={search}
+                setSearch={setSearch}
+                category={category}
+                setCategory={setCategory}
+              />
+            </div>
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* Error */}
-        {!loading && error && (
-          <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
-            <h2 className="text-lg font-semibold text-red-700">
-              Unable to load products
-            </h2>
-
-            <p className="mt-2 text-sm text-red-600">
-              {error}
-            </p>
-
-            <button
-              onClick={fetchProducts}
-              className="mt-5 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
-            >
-              Try Again
-            </button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <div key={n} className="bg-white rounded-2xl border border-slate-100 h-96 animate-pulse p-4 flex flex-col">
+                <div className="w-full h-48 bg-slate-100 rounded-xl mb-4"></div>
+                <div className="w-16 h-3 bg-slate-100 rounded-full mb-3"></div>
+                <div className="w-3/4 h-5 bg-slate-200 rounded-lg mb-2"></div>
+                <div className="w-1/2 h-5 bg-slate-200 rounded-lg mb-4"></div>
+                <div className="mt-auto flex justify-between items-center border-t border-slate-50 pt-4 mb-4">
+                  <div className="w-1/3 h-6 bg-slate-200 rounded-lg"></div>
+                </div>
+                <div className="w-full h-10 bg-slate-100 rounded-lg"></div>
+              </div>
+            ))}
           </div>
-        )}
-
-        {/* Empty */}
-        {!loading && !error && products.length === 0 && (
-          <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-xl">
+        ) : products.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-2xl mx-auto shadow-sm mt-10">
+            <div className="w-20 h-20 bg-slate-50 rounded-full mx-auto flex items-center justify-center text-4xl mb-4 text-slate-300 border border-slate-100">
               🔍
             </div>
-
-            <h2 className="mt-4 text-lg font-semibold text-gray-900">
-              No products found
-            </h2>
-
-            <p className="mt-2 text-sm text-gray-500">
-              Try changing your search or category filter.
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">No products found</h2>
+            <p className="text-slate-500 mb-6">
+              We couldn't find anything matching "{search}" in {category || 'all categories'}.
             </p>
+            <button 
+              onClick={() => { setSearch(''); setCategory(''); }}
+              className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium transition-colors"
+            >
+              Clear all filters
+            </button>
           </div>
-        )}
-
-        {/* Products */}
-        {!loading && !error && products.length > 0 && (
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product) => (
               <ProductCard
                 key={product._id}
                 product={product}
+                isWishlisted={wishlistParams.includes(product._id)}
+                onWishlistUpdate={fetchData}
               />
             ))}
           </div>
         )}
-
-      </main>
-
+      </div>
     </div>
   );
 }
+
+export default Products;

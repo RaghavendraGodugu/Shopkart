@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
+import Navbar from "../components/Navbar";
 
 function Orders() {
   const [orders, setOrders] = useState([]);
@@ -44,15 +45,18 @@ function Orders() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center">
 
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
 
-          <p className="mt-4 text-gray-500">
-            Loading your orders...
-          </p>
+            <p className="mt-4 text-gray-500">
+              Loading your orders...
+            </p>
 
+          </div>
         </div>
       </div>
     );
@@ -64,31 +68,34 @@ function Orders() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <div className="flex flex-1 items-center justify-center px-4">
 
-        <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
+          <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
 
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl text-red-500">
-            !
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl text-red-500">
+              !
+            </div>
+
+            <h1 className="mt-5 text-xl font-bold text-gray-900">
+              Unable to load orders
+            </h1>
+
+            <p className="mt-2 text-sm text-gray-500">
+              {error}
+            </p>
+
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-6 rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white"
+            >
+              Try Again
+            </button>
+
           </div>
 
-          <h1 className="mt-5 text-xl font-bold text-gray-900">
-            Unable to load orders
-          </h1>
-
-          <p className="mt-2 text-sm text-gray-500">
-            {error}
-          </p>
-
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-6 rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white"
-          >
-            Try Again
-          </button>
-
         </div>
-
       </div>
     );
   }
@@ -99,39 +106,42 @@ function Orders() {
 
   if (orders.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-10">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <div className="px-4 py-10 flex-1">
 
-        <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-4xl">
 
-          <h1 className="text-3xl font-bold text-gray-900">
-            My Orders
-          </h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              My Orders
+            </h1>
 
-          <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+            <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
 
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 text-4xl">
-              📦
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 text-4xl">
+                📦
+              </div>
+
+              <h2 className="mt-5 text-xl font-semibold text-gray-900">
+                No orders yet
+              </h2>
+
+              <p className="mt-2 text-gray-500">
+                Your completed orders will appear here.
+              </p>
+
+              <Link
+                to="/products"
+                className="mt-6 inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
+              >
+                Start Shopping
+              </Link>
+
             </div>
-
-            <h2 className="mt-5 text-xl font-semibold text-gray-900">
-              No orders yet
-            </h2>
-
-            <p className="mt-2 text-gray-500">
-              Your completed orders will appear here.
-            </p>
-
-            <Link
-              to="/products"
-              className="mt-6 inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
-            >
-              Start Shopping
-            </Link>
 
           </div>
 
         </div>
-
       </div>
     );
   }
@@ -141,9 +151,12 @@ function Orders() {
   // ================================================
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-10">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
 
-      <div className="mx-auto max-w-5xl">
+      <div className="px-4 py-10 flex-1">
+
+        <div className="mx-auto max-w-5xl">
 
         {/* HEADER */}
 
@@ -304,6 +317,8 @@ function Orders() {
           })}
 
         </div>
+
+      </div>
 
       </div>
 

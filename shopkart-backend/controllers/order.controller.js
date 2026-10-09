@@ -148,11 +148,17 @@ const createPaymentOrder = async (req, res) => {
 
       // ---------------------------------------------
       // Final stock verification
+      // NOTE: cart quantities are already reserved (deducted from
+      // product.stock) at add-to-cart time, so product.stock here is
+      // the remainder AFTER this cart's own reservation. Comparing
+      // `quantity > product.stock` directly would falsely reject
+      // legitimate bulk carts (e.g. 6 units in cart, 4 remaining).
+      // Only fail if stock went negative (manual edit / race).
       // ---------------------------------------------
-      if (quantity > product.stock) {
+      if (product.stock < 0) {
         return res.status(400).json({
           success: false,
-          message: `Insufficient stock for ${product.name}. Only ${product.stock} units available.`,
+          message: `Insufficient stock for ${product.name}.`,
         });
       }
 

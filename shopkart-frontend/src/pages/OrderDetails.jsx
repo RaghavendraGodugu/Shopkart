@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
+import Navbar from "../components/Navbar";
 
 function OrderDetails() {
   const { id } = useParams();
@@ -61,18 +62,21 @@ function OrderDetails() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <div className="flex flex-1 items-center justify-center px-4">
 
-        <div className="text-center">
+          <div className="text-center">
 
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
 
-          <p className="mt-4 text-gray-500">
-            Loading order details...
-          </p>
+            <p className="mt-4 text-gray-500">
+              Loading order details...
+            </p>
+
+          </div>
 
         </div>
-
       </div>
     );
   }
@@ -83,31 +87,34 @@ function OrderDetails() {
 
   if (error || !order) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <div className="flex flex-1 items-center justify-center px-4">
 
-        <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
 
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl text-red-500">
-            !
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl text-red-500">
+              !
+            </div>
+
+            <h1 className="mt-5 text-xl font-bold text-gray-900">
+              Unable to load order
+            </h1>
+
+            <p className="mt-2 text-sm text-gray-500">
+              {error || "Order not found"}
+            </p>
+
+            <Link
+              to="/orders"
+              className="mt-6 inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
+            >
+              Back to My Orders
+            </Link>
+
           </div>
 
-          <h1 className="mt-5 text-xl font-bold text-gray-900">
-            Unable to load order
-          </h1>
-
-          <p className="mt-2 text-sm text-gray-500">
-            {error || "Order not found"}
-          </p>
-
-          <Link
-            to="/orders"
-            className="mt-6 inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
-          >
-            Back to My Orders
-          </Link>
-
         </div>
-
       </div>
     );
   }
@@ -117,9 +124,12 @@ function OrderDetails() {
   // ==================================================
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-10">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
 
-      <div className="mx-auto max-w-4xl">
+      <div className="px-4 py-10 flex-1">
+
+        <div className="mx-auto max-w-4xl">
 
         {/* ==========================================
             HEADER
@@ -417,6 +427,8 @@ function OrderDetails() {
           </Link>
 
         </div>
+
+      </div>
 
       </div>
 

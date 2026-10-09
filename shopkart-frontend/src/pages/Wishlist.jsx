@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
+import Navbar from "../components/Navbar";
 import WishlistCard from "../components/WishlistCard";
 
 function Wishlist() {
@@ -15,9 +16,13 @@ function Wishlist() {
 
       const response = await api.get("/wishlist");
 
-      console.log("Wishlist response:", response.data);
+      // Backend returns populated products directly:
+      // { success: true, wishlist: [{ _id, name, ... }, ...] }
+      // Be tolerant of a { product } wrapper just in case.
+      const raw = response.data.wishlist || [];
+      const products = raw.map((item) => item.product || item);
 
-      setWishlist(response.data.wishlist || []);
+      setWishlist(products);
     } catch (error) {
       console.error("Failed to fetch wishlist:", error);
 
@@ -47,6 +52,9 @@ function Wishlist() {
           (product) => product._id !== productId
         )
       );
+
+      // Keep the Navbar badge in sync.
+      window.dispatchEvent(new Event("wishlistUpdated"));
     } catch (error) {
       console.error("Remove wishlist error:", error);
 
@@ -59,13 +67,11 @@ function Wishlist() {
 
   if (loading) {
     return (
-      <div className="wishlist-page">
-        <div className="wishlist-container">
-          <h1>My Wishlist</h1>
-
-          <div className="wishlist-loading">
-            Loading your wishlist...
-          </div>
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex flex-col items-center justify-center p-4">
+          <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="mt-4 text-slate-500 font-medium">Loading your wishlist...</p>
         </div>
       </div>
     );
@@ -73,16 +79,21 @@ function Wishlist() {
 
   if (error) {
     return (
-      <div className="wishlist-page">
-        <div className="wishlist-container">
-          <h1>My Wishlist</h1>
-
-          <div className="wishlist-error">
-            <p>{error}</p>
-
-            <button onClick={fetchWishlist}>
-              Try Again
-            </button>
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-10 max-w-md w-full text-center shadow-sm">
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto text-3xl mb-4 font-serif">!</div>
+            <h1 className="text-xl font-bold text-slate-900 mb-2">My Wishlist</h1>
+            <p className="text-slate-500 mb-6">{error}</p>
+            <div className="flex flex-col gap-3">
+              <button onClick={fetchWishlist} className="btn-primary">
+                Try Again
+              </button>
+              <Link to="/products" className="btn-secondary text-center">
+                Continue Shopping
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -90,18 +101,15 @@ function Wishlist() {
   }
 
   return (
-    <div className="wishlist-page">
-      <div className="wishlist-container">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <Navbar />
 
-        <div className="wishlist-header">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
-            <span className="wishlist-label">
-              SHOPKART
-            </span>
-
-            <h1>My Wishlist</h1>
-
-            <p>
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-1">ShopKart</p>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">My Wishlist</h1>
+            <p className="text-sm text-slate-500 mt-2">
               {wishlist.length === 0
                 ? "Save products you love."
                 : `${wishlist.length} ${
@@ -114,33 +122,33 @@ function Wishlist() {
 
           <Link
             to="/products"
-            className="continue-shopping"
+            className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline underline-offset-4 hidden sm:block"
           >
             Continue Shopping
           </Link>
         </div>
 
         {wishlist.length === 0 ? (
-          <div className="empty-wishlist">
-            <div className="empty-heart">
+          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-2xl mx-auto shadow-sm">
+            <div className="w-20 h-20 bg-slate-50 rounded-full mx-auto flex items-center justify-center text-4xl mb-4 text-slate-300 border border-slate-100">
               ♡
             </div>
 
-            <h2>Your wishlist is empty</h2>
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">Your wishlist is empty</h2>
 
-            <p>
+            <p className="text-slate-500 mb-6">
               Products you save will appear here.
             </p>
 
             <Link
               to="/products"
-              className="shop-products-button"
+              className="btn-primary max-w-xs mx-auto"
             >
               Explore Products
             </Link>
           </div>
         ) : (
-          <div className="wishlist-grid">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {wishlist.map((product) => (
               <WishlistCard
                 key={product._id}
@@ -150,7 +158,6 @@ function Wishlist() {
             ))}
           </div>
         )}
-
       </div>
     </div>
   );
