@@ -24,7 +24,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: "https://shopkart-ochre.vercel.app",
+    origin: "https://shopkart-lime.vercel.app",
     credentials: true,
   })
 );
