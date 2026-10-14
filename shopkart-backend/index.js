@@ -1,3 +1,4 @@
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
@@ -11,17 +12,9 @@ const cartRoutes = require("./routes/cart.routes");
 const orderRoutes = require("./routes/order.routes");
 
 const app = express();
-
 const PORT = process.env.PORT || 5050;
 
-// ======================================================
-// MIDDLEWARE
-// ======================================================
-
-app.use(express.json());
-
-app.use(cookieParser());
-
+// Middleware
 app.use(
   cors({
     origin: "https://shopkart-lime.vercel.app",
@@ -29,10 +22,10 @@ app.use(
   })
 );
 
-// ======================================================
-// HEALTH CHECK
-// ======================================================
+app.use(express.json());
+app.use(cookieParser());
 
+// Health check
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -40,31 +33,14 @@ app.get("/", (req, res) => {
   });
 });
 
-// ======================================================
-// API ROUTES
-// ======================================================
-
-// Customer Authentication
+// API routes
 app.use("/customers", customerRoutes);
-
-// Product APIs
 app.use("/products", productRoutes);
-
-// Wishlist APIs
 app.use("/wishlist", wishlistRoutes);
-
-// Cart APIs
 app.use("/cart", cartRoutes);
-
-// Order APIs
 app.use("/orders", orderRoutes);
 
-// ======================================================
-// HANDLE UNKNOWN ROUTES
-// IMPORTANT:
-// This MUST stay after all API routes.
-// ======================================================
-
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -72,10 +48,7 @@ app.use((req, res) => {
   });
 });
 
-// ======================================================
-// GLOBAL ERROR HANDLER
-// ======================================================
-
+// Error handler
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
 
@@ -85,10 +58,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ======================================================
-// CONNECT MONGODB & START SERVER
-// ======================================================
-
+// Start server
 const startServer = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
@@ -100,7 +70,6 @@ const startServer = async () => {
     });
   } catch (error) {
     console.error("MongoDB connection failed:", error.message);
-
     process.exit(1);
   }
 };
